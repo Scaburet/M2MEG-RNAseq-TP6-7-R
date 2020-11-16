@@ -13,7 +13,6 @@ dependencies:
   - nbresuse
   - nodejs
   - libgomp
-  - bowtie
   - r-irkernel
   - r-base>=3.6
   - r-tidyverse 
