@@ -23,6 +23,3 @@ dependencies:
   - r-RSQLite
   - r-gplots
   - r-locfit
-  
-  # - r-ggplot2
-  
