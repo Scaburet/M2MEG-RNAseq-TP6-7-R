@@ -6,10 +6,6 @@
 # Install R package
 # if not available as conda package
 R -e "install.packages('diagram', repos='http://cran.rstudio.com/')"
-#R -e "install.packages('locfit', repos='http://cran.rstudio.com/')"
-
-# Va falloir trouver un moyen de désactiver le threading
-# R -e "install.packages('preprocessCore', --configure-args='--disable-threading')"
 
 # Install R/Bioconductor package
 # if not available as conda package
@@ -28,6 +24,3 @@ R -e "BiocManager::install('Biostrings')"
 
 R -e "BiocManager::install('limma')"
 R -e "BiocManager::install('DESeq')"
-
-# R -e "BiocManager::install('Biobase')"
-# R -e "BiocManager::install('genefilter')"
