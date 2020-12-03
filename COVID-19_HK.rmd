@@ -1,0 +1,144 @@
+---
+title: "COVID-19 Hong-Kong patients"
+subtitle: Hodata:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAWElEQVR42mNgGPTAxsZmJsVqQApgmGw1yApwKcQiT7phRBuCzzCSDSHGMKINIeDNmWQlA2IigKJwIssQkHdINgxfmBBtGDEBS3KCxBc7pMQgMYE5c/AXPwAwSX4lV3pTWwAAAABJRU5ErkJggg==w is COVID Spreading in HongKong? (Big Thanks to Antoine Bridier-Nahmias for this notebook!)
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    self_contained: yes
+    fig_caption: yes  
+    fig_height: 6
+    fig_width: 7
+    highlight: zenburn
+    number_sections: no
+    incremental: no
+    keep_md: yes
+    theme: cerulean
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    widescreen: yes
+    code_folding: hide
+    df_print: paged
+  pdf_document: 
+    fig_caption: yes
+    highlight: zenburn
+    toc: yes  
+    toc_depth: 5
+font-import: http://fonts.googleapis.com/css?family=Risque
+start: 15/10/2020
+font-family: Garamond
+editor_options:
+  chunk_output_type: console
+transition: linear
+---
+
+```{r knitr options, include=FALSE, echo=FALSE, eval=TRUE}
+library(knitr)
+
+options(width = 300)
+knitr::opts_chunk$set(
+  root.dir = ".",
+  fig.width = 7, fig.height = 5, 
+  out.width = "80%",
+  fig.align = "center", 
+  fig.path = "figures/",
+  size = "tiny", 
+  echo = TRUE, 
+  eval = TRUE, 
+  warning = FALSE, 
+  message = FALSE, 
+  results = TRUE, 
+  comment = "")
+# knitr::asis_output("\\footnotesize")
+
+```
+
+```{r Session Info, echo=T, eval=T, warning=F }
+if(!require(tidyverse)){install.packages("tidyverse")}
+library(tidyverse)
+if(!require(tidyverse)){install.packages("lubridate")}
+library(lubridate)
+sessionInfo()
+```
+
+![H-K emblem](https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Regional_Emblem_of_Hong_Kong.svg/200px-Regional_Emblem_of_Hong_Kong.svg.png)
+
+> Open data for countries/areas with reported cases of COVID-19 is available on 27 February 2020. Open data for list of buildings of the home confinees under mandatory home quarantine according to Cap. 599C of Hong Kong Laws is available on 29 February 2020.
+
+**Data downloaded from: https://data.gov.hk/en-data/dataset/hk-dh-chpsebcddr-novel-infectious-agent**
+
+# 1. Data and packages loading
+```{r}
+url_dataset <- 
+ "http://www.chp.gov.hk/files/misc/enhanced_sur_covid_19_eng.csv"
+df_HK <- read_csv(file = url_dataset, col_names = TRUE)
+df_HK
+```
+
+# 2. Exploratory Data Analysis {.tabset}
+
+## What is in the dataset ?
+```{r}
+dim(df_HK)
+names(df_HK)
+str(df_HK)
+```
+
+## A little data parsing / transformation
+The variable `Report date` was loaded as a string. If we want to use it as a date, we need to convert it to a Date format.
+```{r}
+# convert `Report date` to a `Date` and order by `Report date`
+df_HK$`Report date` <- 
+ dmy(df_HK$`Report date`)
+df_HK <- 
+  df_HK[order(df_HK$`Report date`), ]
+
+```
+
+## A few figures
+```{r}
+summary(df_HK$Age)
+table(df_HK$Gender)
+barplot(table(df_HK$Gender))
+barplot(table(df_HK$`Hospitalised/Discharged/Deceased`))
+boxplot(df_HK$Age)
+boxplot(Age ~ Gender, data = df_HK)
+```
+
+## Are infected women older than men ?
+We will use a _t-test_ to determine if the mean age for female patient is greater than the mean age of male patients.
+
+```{r}
+women <- df_HK$Age[df_HK$Gender == "F"]
+men <- df_HK$Age[df_HK$Gender == "M"]
+summary(women)
+summary(men)
+t.test(women, men, alternative = "greater", var.equal = T, paired = F)
+```
+
+# 3. Follow the infections across time  
+
+## A nice plot
+```{r}
+# make the cumulative sum of infected patients
+date_start <- dmy("22-01-2020")
+
+df_HK %>% 
+  mutate(Time = `Report date` - date_start) %>% 
+  group_by(`Report date`) %>%
+  mutate(n_case = n()) %>% 
+  summarise(n_case = max(n_case), Time = unique(Time)) %>%
+  ungroup() %>% 
+  mutate(n_case = cumsum(n_case)) -> infection_evol
+
+plot(x = infection_evol$Time, 
+     y = infection_evol$n_case, 
+     xlab = "Time (Days)",
+     ylab = "Cases")
+l_model <- lm(n_case ~ Time, data = infection_evol)
+summary(l_model)
+abline(l_model, col = "red")
+```
+Any conclusions about that ?
+
+## What do you want to see  now ?
